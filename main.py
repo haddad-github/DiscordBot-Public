@@ -101,15 +101,32 @@ async def coin(ctx, coin):
                            "Daily change: {}%```"
                            .format(coin.upper(), price,percent))
 
-#Gives stock price based on yahoo finance
 #Stock using yfinance
 @client.command()
 async def stock(ctx, ticker):
 
     stock = yf.Ticker(ticker)
+    
+    pourcent = round((1 - (stock.info["ask"]/stock.info["previousClose"]))*100, 2)
+
+    if stock.info["quoteType"] == "ETF":
+        price = "$ {}".format(round(stock.info["ask"], 2))
+
+        if stock.info["ask"] >= stock.info["previousClose"]:
+            ratio = "+{} %".format(pourcent)
+        else:
+            ratio = "-{} %".format(pourcent)
+
+    else:
+        price = "$ {}".format(round(stock.info["currentPrice"], 2))
+
+        if stock.info["currentPrice"] >= stock.info["previousClose"]:
+            ratio = "+{} %".format(stock.info["currentRatio"])
+        else:
+            ratio = "-{} %".format(stock.info["currentRatio"])
+
 
     name = stock.info["shortName"]
-    price = "$ {}".format(round(stock.info["currentPrice"], 2))
     day_high = "$ {}".format(round(stock.info["dayHigh"],2))
     openN = "$ {}".format(round(stock.info["open"], 2))
     prev_close = "$ {}".format(round(stock.info["previousClose"],2))
@@ -119,15 +136,9 @@ async def stock(ctx, ticker):
     volume = f"{volumeN:,}"
     average_volume = f"{average_volumeN:,}"
 
-    if stock.info["currentPrice"] >= stock.info["previousClose"]:
-        ratio = "+{} %".format(stock.info["currentRatio"])
-    else:
-        ratio = "-{} %".format(stock.info["currentRatio"])
 
-    await ctx.channel.send("[Stock] **{}**\n```Price: {}\nDaily change: {}"
-                           "\n\nHigh of the day: {}\nOpen: {}\nPrevious close: {}"
-                           "\n\nVolume: {}\nAvg. Volume: {}```".format(name, price, ratio, day_high, openN, prev_close,
-                                                                       volume, average_volume))
+    await ctx.channel.send("[Stock] **{}**\n```Price: {}\nDaily change: {}\n\nHigh of the day: {}\nOpen: {}\nPrevious close: {}\n\n"
+      "Volume: {}\nAvg. Volume: {}```".format(name, price, ratio, day_high, openN, prev_close, volume, average_volume))
 
 
 #Gives gas price based on CAAQuebec
