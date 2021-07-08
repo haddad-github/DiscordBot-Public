@@ -1,11 +1,16 @@
 from discord.ext import commands
-from bs4 import BeautifulSoup as soup
-from urllib.request import urlopen as uReq
 import re
 import random
 import requests
 import lxml.html
+import time
 
+from bs4 import BeautifulSoup as soup
+from urllib.request import urlopen as uReq
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+import yfinance as yf
 
 #"!" becomes the prefix for all commands (ex: !ping)
 client = commands.Bot(command_prefix = "!")
@@ -54,21 +59,30 @@ async def et(ctx, word):
 
 #Gives anime's rating based on myanimelist
 @client.command()
-async def anime(ctx, anime):
+async def anime(ctx,*, anime):
     url = "https://myanimelist.net/anime.php?cat=anime&q=" + anime
+
+    # Read page
     uClient = uReq(url)
     page_html = uClient.read()
+
+    # Parse HTML
     page_soup = soup(page_html, "html.parser")
 
+    # Find the class where the word's definition is found in and print it with ".text" to remove all the <p>'s, etc.
     tds = page_soup.find_all(class_="borderClass ac bgColor0")
 
+    nom = page_soup.find_all(class_="borderClass bgColor0")
+    nom_re = re.findall(".*<img alt=(.*) border=\"0\".*", str(nom[0]))
+
+    # Append the values of the td's, then pick the one of the first anime that pops ups (values[2])
     values = []
     for td in tds:
         values.append(td.text)
 
     rating = values[2].split()[0] #[2] inclut les espaces; donc split() pour mettre en liste, puis [0] pour 1ier elem
 
-    await ctx.channel.send("[Anime rating] **{}**: {}".format(anime.upper(),rating))
+    await ctx.channel.send("```[Anime rating] {}: {}```".format(nom_re[0].split("\"")[1],rating))
 
 #Gives cryptocurrency price based on coindesk
 @client.command()
@@ -88,30 +102,33 @@ async def coin(ctx, coin):
                            .format(coin.upper(), price,percent))
 
 #Gives stock price based on yahoo finance
+#Stock using yfinance
 @client.command()
-async def stock(ctx, stock):
+async def stock(ctx, ticker):
 
-    url = "https://finance.yahoo.com/quote/" + stock
-    uClient = uReq(url)
-    page_html = uClient.read()
-    page_soup = soup(page_html, "html.parser")
+    stock = yf.Ticker(ticker)
 
-    price = page_soup.find(class_="Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)").text
-    percent_non_text = page_soup.find(class_="Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($positiveColor)")
+    name = stock.info["shortName"]
+    price = "$ {}".format(round(stock.info["currentPrice"], 2))
+    day_high = "$ {}".format(round(stock.info["dayHigh"],2))
+    openN = "$ {}".format(round(stock.info["open"], 2))
+    prev_close = "$ {}".format(round(stock.info["previousClose"],2))
+    volumeN = stock.info["volume"]
+    average_volumeN = stock.info["averageVolume"]
 
-    if percent_non_text == None:
-        percent = page_soup.find(class_="Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($negativeColor)").text
+    volume = f"{volumeN:,}"
+    average_volume = f"{average_volumeN:,}"
 
+    if stock.info["currentPrice"] >= stock.info["previousClose"]:
+        ratio = "+{} %".format(stock.info["currentRatio"])
     else:
-        percent = page_soup.find(class_="Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($positiveColor)").text
+        ratio = "-{} %".format(stock.info["currentRatio"])
 
-    print(price)
-    print(percent)
+    await ctx.channel.send("[Stock] **{}**\n```Price: {}\nDaily change: {}"
+                           "\n\nHigh of the day: {}\nOpen: {}\nPrevious close: {}"
+                           "\n\nVolume: {}\nAvg. Volume: {}```".format(name, price, ratio, day_high, openN, prev_close,
+                                                                       volume, average_volume))
 
-    await ctx.channel.send("[Stock] **{}**\n"
-                           "```Price: ${}\n"
-                           "Daily change: {}```"
-                           .format(stock.upper(), price, percent))
 
 #Gives gas price based on CAAQuebec
 @client.command()
@@ -198,22 +215,200 @@ async def table(ctx, league):
 @client.command()
 async def steam(ctx, game):
 
-    html = requests.get("https://store.steampowered.com/search/?term=" + game)
+    html = requests.get("https://store.steampowered.com/search/?term=" + game +"&category1=998")
     doc = lxml.html.fromstring(html.content)
 
     title = doc.xpath('//*[@id="search_resultsRows"]/a[1]/div[2]/div[1]/span/text()')[0]
     discount = doc.xpath('.//div[@class="col search_discount  responsive_secondrow"]/text()')
 
-    price = doc.xpath('.//div[@class="col search_price  responsive_secondrow"]/text()')
+    if not discount:
+        discount = "Pas de rabais"
+        price = doc.xpath('.//div[@class="col search_price  responsive_secondrow"]/text()')
+    else:
+        price = doc.xpath('.//div[@class="col search_price discounted responsive_secondrow"]/text()')
+
     price_split = price[0].split()
     price_final = " ".join(price_split)
 
-    if not discount:
-        discount = "Pas de rabais"
-
-
     await ctx.channel.send("```{}: {} ({})```".format(title, price_final, discount))
 
+#Gets meteo for 2 places only (expansion possible if ever relevant) from weather.gc.ca
+#Currently buggy before a certain hour ET due to index changes throughout the day
+@client.command()
+async def meteo(ctx, region):
+
+    if region == "laval".lower():
+        num = "76"
+    elif region == "mtl".lower():
+        num = "147"
+
+    else:
+        await ctx.channel.send("Region irrelevant, choisi Laval ou Mtl, merci")
+
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+    }
+
+    result = requests.get("https://weather.gc.ca/city/pages/qc-{}_metric_e.html".format(num), headers=HEADERS)
+    soup_a = soup(result.content, "html.parser")
+
+    row = soup_a.find_all(class_="div-column")
+    row_str = str(row)
+
+    days = re.findall(".*\">(.*)</strong>.*", row_str)
+
+    temps_day = re.findall(".*title=\"max\">(.*)<abbr title=\"Celsius\".*", row_str)
+
+    predictions_night = re.findall(".*img alt=\"(.*)\" class.*", row_str)[0::2]
+
+    temps_night = re.findall(".*title=\"min\">(.*)<abbr title=\"Celsius\".*", row_str)
+
+    predictions_day = re.findall(".*img alt=\"(.*)\" class.*", row_str)[1::2]
+
+    predictions_night.append("N/A")
+    temps_night.append("N/A")
+
+    for i, word in enumerate(temps_night):
+        if word == "N/A":
+            temps_night[i] = ":question:"
+
+    for i, word in enumerate(predictions_day):
+        if word == "Mainly cloudy" or word == "Partly cloudy":
+            predictions_day[i] = ":cloud:"
+
+        elif word == "Sunny" or word == "Clear":
+            predictions_day[i] = ":sunny:"
+
+        elif word == "Chance of showers" or word == "Periods of rain":
+            predictions_day[i] = ":cloud_rain:"
+
+    for i, word in enumerate(predictions_night):
+        if word == "Mainly cloudy" or word == "Partly cloudy":
+            predictions_night[i] = ":cloud:"
+
+        elif word == "Sunny" or word == "Clear":
+            predictions_night[i] = ":sunny:"
+
+        elif word == "Chance of showers" or word == "Periods of rain":
+            predictions_night[i] = ":cloud_rain:"
+
+        elif word == "N/A":
+            predictions_night[i] = ":question:"
+
+
+    semaine = ""
+
+    for i in range(len(days)):
+
+        semaine += "{}\n───\n :sun_with_face: :  *{}*    *{}*\n :crescent_moon: :  *{}*    *{}*\n\n".format(days[i], temps_day[i], predictions_day[i],
+                                                                        temps_night[i+1], predictions_night[i+1])
+
+    await ctx.channel.send(" {} ".format(semaine))
+
+#OSRS G.E. Price
+@client.command()
+async def ge(ctx,*,item):
+
+    html = requests.get("https://oldschool.runescape.wiki/w/" + item)
+    doc = lxml.html.fromstring(html.content)
+
+    name = doc.xpath('//*[@id="mw-content-text"]/div/table[1]/tbody/tr[1]/th/text()')
+    price = doc.xpath('//*[@id="mw-content-text"]/div/table[1]/tbody/tr[29]/td/span/span/text()')
+
+    if price == []:
+        price = doc.xpath('//*[@id="mw-content-text"]/div/table[1]/tbody/tr[28]/td/span/span/text()')
+
+    name_str = "".join(name)
+
+    price_str = "".join(price)
+
+    await ctx.channel.send("```{}: {} gp```".format(name_str, price_str))
+
+#Parc available
+@client.command()
+async def foot(ctx, parc):
+
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+
+    # Locate chromedriver et utiliser chrome
+    path = "/usr/bin/chromedriver"
+    driver = webdriver.Chrome(path, options=chrome_options)
+
+    if parc == "cartier":
+        driver.get("https://www.publicationsports.com/cal/index.php?o=36&t=212&p=516&lg=fr")
+
+    elif parc == "coursol":
+        driver.get("https://www.publicationsports.com/cal/index.php?o=36&t=192&p=536&lg=fr")
+
+    days = driver.find_elements_by_class_name("fc-col-header-cell-cushion ")
+
+    d = []
+    e = []
+    ts = []
+
+    d.append(days[0].text)
+
+    events = driver.find_elements_by_class_name("fc-event-title-container")
+
+    for event in events:
+        e.append(event.text)
+
+    times = driver.find_elements_by_class_name("fc-event-time")
+
+    for time in times:
+        ts.append(time.text)
+
+    for i, t in enumerate(ts):
+        if "00:00" in t:
+            ts = ts[:i]
+
+    zipped = sorted(zip(e, ts))
+
+    event_and_time = ""
+
+    for e, ts in zipped:
+        event_and_time += str(e) + " " + "\n"
+        event_and_time += str(ts) + " " + "\n" + "\n"
+
+    if zipped == []:
+        await ctx.channel.send("```{}\n\nLibre```".format(d[0].upper()))
+    else:
+        await ctx.channel.send("```{}\n\n{}```".format(d[0].upper(), event_and_time))
+
+
+#Covid Quebec 24 hours
+#Currently buggy due to indexation issues on different days
+@client.command()
+async def covid(ctx):
+    url = "https://www.quebec.ca/en/health/health-issues/a-z/2019-coronavirus/situation-coronavirus-in-quebec"
+
+    # Read page
+    uClient = uReq(url)
+    page_html = uClient.read()
+
+    # Parse HTML
+    page_soup = soup(page_html, "html.parser")
+
+    # Find the class where the word's definition is found in and print it with ".text" to remove all the <p>'s, etc.
+    text = page_soup.find_all(class_="ce-bodytext")
+
+    # print(str(text[2]))
+
+    cas = re.findall(".*show:</p><ul><li>(.*) bringing.*", str(text[2]))
+
+    death = re.findall(".*deaths: 	<ul><li>(.*)intensive care.*", str(text[2]))
+
+    death_last = re.findall("\['(.*)in the last 24.*", str(death))
+    death_last_final = death_last[0].replace("\\xa0", " ")
+
+    hospital = re.findall(".*,</li></ul></li><li>(.*)hospitalizations.*", str(death))
+    hospital_2 = hospital[0]
+    hospital_2 = hospital_2.replace("\\xa0", "")
+
+    await ctx.channel.send(
+        "```Last 24 hours, country of Quebec (merci): \n\n• {}\n• {}\n• {} hospitalizations```".format(
+            cas[0].replace(",", ""), death_last_final, hospital_2))
 
 #Flip coins
 @client.command()
@@ -228,14 +423,18 @@ async def flip(ctx):
 @client.command()
 async def commands(ctx):
 
-    await ctx.channel.send("```!remove [mot] pour delete tous les messages contenant ce mot dans l'histoire du channel\n"
+    await ctx.channel.send("```[OFF]!remove [mot] pour delete tous les messages contenant ce mot dans l'histoire du channel\n"
                            "\n!et [mot] pour avoir l'etymologie d'un mot (ex: !et bird)\n"
                            "\n!anime [nom anime] pour avoir le rating d'un anime (ex: !anime bleach)\n"
                            "\n!coin [nom du crypto] pour avoir le prix et 24h change du coin\n"
                            "\n!stock [NASDAQ code] pour avoir le prix et 24h change du stock\n"
                            "\n!gas [region] pour avoir le prix moyen aujourd'hui\n"
+                           "\n!foot [parc] pour avoir la disponibilitee du parc aujourd'hui\n"
                            "\n!table [england/spain/italy/germany] pour avoir la table de la ligue en ce momment\n"
-                           "\n!steam [nom du jeu] pour avoir le prix du jeu sur Steam ou pour savoir si c'est en rabais"
+                           "\n!steam [nom du jeu] pour avoir le prix du jeu sur Steam ou pour savoir si c'est en rabais\n"
+                           "\n!ge [item] pour avoir le prix d'un item de OSRS\n"
+                           "\n!foot [parc] pour avoir disponibilitee du parc"
+                           "\n[BUG]!meteo [laval/mtl] pour avoir la meteo des 7 prochains jours\n"
                            "\n!flip pour flip un cous (pile ou face)\n```")
 
 #Must be the last line of code
