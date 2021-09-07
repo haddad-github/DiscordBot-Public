@@ -13,7 +13,7 @@ class trans(commands.Cog):
 
     async def translate(self, ctx, target, *,text):
 
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"C:\Users\rorop\Desktop\GoogleCoudKey.json"
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"###"
 
         translate_client = translate.Client()
 
