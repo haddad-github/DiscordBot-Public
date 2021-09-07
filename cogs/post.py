@@ -14,7 +14,7 @@ class post(commands.Cog):
 
     async def post(self, ctx, link, fromm = None, to = None):
         # Execute download.exe + link
-        os.chdir(r"C:\Users\rorop\Desktop\youtube-dl")
+        os.chdir(r"C:\Users\###\Desktop\youtube-dl")
 
         if fromm == None and to == None:
             os.system("youtube-dl -f best "+ link + " -o %(title).20s.%(ext)s")
@@ -24,12 +24,12 @@ class post(commands.Cog):
 
             os.system(f'youtube-dl --postprocessor-args "-ss {fromm} -to {to}" {link} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]"')
 
-        a = os.listdir(r"C:\Users\rorop\Desktop\youtube-dl")
+        a = os.listdir(r"C:\Users\###\Desktop\youtube-dl")
         latest = max(a, key=os.path.getctime)
 
         if latest[-3:] == 'mp4':
-            await ctx.channel.send(file=discord.File(r"C:\Users\rorop\Desktop\youtube-dl\\" + latest))
-            os.remove(r"C:\Users\rorop\Desktop\youtube-dl\\" + latest)
+            await ctx.channel.send(file=discord.File(r"C:\Users\###\Desktop\youtube-dl\\" + latest))
+            os.remove(r"C:\Users\###\Desktop\youtube-dl\\" + latest)
         else:
             await ctx.channel.send('Pas de mp4')
 
