@@ -17,7 +17,7 @@ class coin(commands.Cog):
 
     async def coin(self, ctx, coin):
 
-        api_key = '09f7e451-b941-45a7-a063-68de9ae25dfb'
+        api_key = '####'
 
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
 
