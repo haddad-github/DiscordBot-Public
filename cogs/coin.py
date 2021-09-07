@@ -17,7 +17,7 @@ class coin(commands.Cog):
     async def coin(self, ctx, coin):
 
         url = 'https://api.livecoinwatch.com/coins/single'
-        api_key = 'ff46b9f6-c6cb-4361-9f64-b60161d7dedb'
+        api_key = '###'
 
         params = {
             'currency': 'USD',
