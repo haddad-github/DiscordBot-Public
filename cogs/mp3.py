@@ -20,8 +20,8 @@ class mp3(commands.Cog):
         latest = max(a, key=os.path.getctime)
 
         if latest[-3:] == 'mp3':
-            await ctx.channel.send(file=discord.File(r"C:\Users\rorop\Desktop\youtube-dl\\" + latest))
-            os.remove(r"C:\Users\rorop\Desktop\youtube-dl\\" + latest)
+            await ctx.channel.send(file=discord.File(r"C:\Users\###\Desktop\youtube-dl\\" + latest))
+            os.remove(r"C:\Users\###\Desktop\youtube-dl\\" + latest)
         else:
             await ctx.channel.send('Pas un mp3')
 
