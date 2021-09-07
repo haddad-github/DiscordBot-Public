@@ -14,7 +14,7 @@ class gas(commands.Cog):
     ###################################################################################
 
     async def gas(self, ctx, region):
-        url = "###" + region
+        url = "https://www.caaquebec.com/en/on-the-road/public-interest/gasoline-matters/gasoline-watch/region/" + region
         uClient = uReq(url)
         page_html = uClient.read()
         page_soup = soup(page_html, "html.parser")
@@ -31,6 +31,12 @@ class gas(commands.Cog):
         embed.add_field(name="Supreme", value=prix_final+18)
 
         await ctx.channel.send(embed=embed)
+
+        # await ctx.channel.send("```Prix d'essence moyen à {}:\n"
+        #                        "Ordinaire: {}\n"
+        #                        "Extra: {}\n"
+        #                        "Supreme: {}\n```".format(region, prix_final, prix_final + 15, prix_final + 18))
+
 
     ###################################################################################
 

@@ -13,10 +13,10 @@ class meteo(commands.Cog):
 
     async def weather(self, ctx):
 
-        api_key = "###"
+        api_key = "4ac53b87c2233ee8de919d51d83a4347"
 
-        #lon = ####
-        #lat = ####
+        lon = -73.692
+        lat = 45.57
         part = "minute,hourly"
 
         url = f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={part}&appid={api_key}'
@@ -52,7 +52,7 @@ class meteo(commands.Cog):
             string += "Conditions: " + descr[i] + "\n"
 
 
-        embed = discord.Embed(title="#### - 8 days weather forecast")
+        embed = discord.Embed(title="Laval, QC - 8 days weather forecast")
 
         embed.add_field(name="_" ,value=string)
 

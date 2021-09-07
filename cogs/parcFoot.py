@@ -20,11 +20,11 @@ class foot(commands.Cog):
         path = "C:\chromedriver.exe"
         driver = webdriver.Chrome(path, options=chrome_options)
 
-        #if parc == "PARC1":
-            #driver.get("https://####")
+        if parc == "cartier":
+            driver.get("https://www.publicationsports.com/cal/index.php?o=36&t=212&p=516&lg=fr")
 
-        #elif parc == "PARC2":
-            #driver.get("https://####")
+        elif parc == "coursol":
+            driver.get("https://www.publicationsports.com/cal/index.php?o=36&t=192&p=536&lg=fr")
 
         days = driver.find_elements_by_class_name("fc-col-header-cell-cushion ")
 
