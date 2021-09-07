@@ -12,11 +12,11 @@ class mp3(commands.Cog):
     ###################################################################################
 
     async def mp3(self, ctx, link):
-        os.chdir(r"C:\Users\rorop\Desktop\youtube-dl")
+        os.chdir(r"C:\Users\###\Desktop\youtube-dl")
 
         os.system('youtube-dl --extract-audio --audio-format mp3 ' + link)
 
-        a = os.listdir(r"C:\Users\rorop\Desktop\youtube-dl")
+        a = os.listdir(r"C:\Users\###\Desktop\youtube-dl")
         latest = max(a, key=os.path.getctime)
 
         if latest[-3:] == 'mp3':
