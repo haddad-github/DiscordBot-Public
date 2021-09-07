@@ -13,7 +13,7 @@ class meteo(commands.Cog):
 
     async def weather(self, ctx):
 
-        api_key = "4ac53b87c2233ee8de919d51d83a4347"
+        api_key = "###"
 
         #lon = ####
         #lat = ####
