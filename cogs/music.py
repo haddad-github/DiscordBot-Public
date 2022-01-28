@@ -13,7 +13,7 @@ class music(commands.Cog):
     async def play(self, ctx, *url):
         #If no author, send warning
         if ctx.author.voice is None:
-            await ctx.send("T'es pas dans un channel innit bruv")
+            await ctx.send("T'es pas dans un channel")
 
         #Store the voice channel
         voice_channel = ctx.author.voice.channel
