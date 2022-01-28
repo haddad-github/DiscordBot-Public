@@ -9,25 +9,6 @@ class music(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    # @commands.command()
-
-    ###################################################################################
-
-    # async def join(self, ctx):
-    #     if ctx.author.voice is None:
-    #         await ctx.send("You're not in a voice channel")
-    #
-    #     voice_channel = ctx.author.voice.channel
-    #
-    #     if ctx.voice_client is None:
-    #         await voice_channel.connect()
-    #     else:
-    #         await ctx.voice_client.move_to(voice_channel)
-
-    # @commands.command()
-    # async def disconnect(self, ctx):
-    #     await ctx.voice_client.disconnect()
-
     @commands.command()
     async def play(self, ctx, *url):
         #If no author, send warning
@@ -53,7 +34,7 @@ class music(commands.Cog):
             with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
                 info = ydl.extract_info(url, download=False)
                 url2 = info['formats'][0]['url']
-                source = await discord.FFmpegOpusAudio.from_probe(url2, executable=r"C:\Users\rorop\Desktop\youtube-dl\ffmpeg.exe")
+                source = await discord.FFmpegOpusAudio.from_probe(url2, executable=r"C:###\youtube-dl\ffmpeg.exe")
                 await ctx.channel.send("Playing ton beat de merde")
                 vc.play(source)
 
@@ -64,8 +45,8 @@ class music(commands.Cog):
                 print(info['entries'][0])
                 urlx = info['entries'][0]
                 url2 = urlx['formats'][0]['url']
-                source = await discord.FFmpegOpusAudio.from_probe(url2,executable=r"C:\Users\rorop\Desktop\youtube-dl\ffmpeg.exe")
-                await ctx.channel.send(f"Playing to beat de merde: {urlx['title']}")
+                source = await discord.FFmpegOpusAudio.from_probe(url2,executable=r"C:###\youtube-dl\ffmpeg.exe")
+                await ctx.channel.send(f"Playing: {urlx['title']}")
                 vc.play(source)
 
     @commands.command()
