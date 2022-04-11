@@ -5,7 +5,7 @@ from discord.ext import commands
 client = commands.Bot(command_prefix = "!")
 
 #Indicates if bot is active
-@client.event #event ([variable].event)
+@client.event
 async def on_ready():
     print("Bot is ready.")
 
@@ -20,7 +20,7 @@ async def unload(ctx, extension):
 #Looking through all files in cogs directory (specifically .py files)
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
-        client.load_extension(f'cogs.{filename[:-3]}')#removes .py
+        client.load_extension(f'cogs.{filename[:-3]}') #removes .py
 
 ##################################################################
 
