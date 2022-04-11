@@ -13,7 +13,7 @@ class covid(commands.Cog):
     ###################################################################################
 
     async def covid(self, ctx):
-        url = "https://www.quebec.ca/en/health/health-issues/a-z/2019-coronavirus/situation-coronavirus-in-quebec"
+        url = "https://www.#####/en/health/health-issues/a-z/2019-coronavirus/situation-coronavirus-in-quebec"
 
         # Read page
         uClient = uReq(url)
