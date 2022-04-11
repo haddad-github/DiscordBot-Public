@@ -52,7 +52,7 @@ class meteo(commands.Cog):
             string += "Conditions: " + descr[i] + "\n"
 
 
-        embed = discord.Embed(title="Laval, QC - 8 days weather forecast")
+        embed = discord.Embed(title="###### - 8 days weather forecast")
 
         embed.add_field(name="_" ,value=string)
 
